@@ -25,12 +25,12 @@ def load_count_data() -> pd.DataFrame:
     return df
 
 if __name__ == '__main__':
-    st.title('Sykkeltellere i Stavanger område')
+    st.title('Sykkeltellere i Stavanger-område')
 
-    data_load_state = st.text('Laster data...')
+    data_loading = st.text('Laster data...')
     locations = load_counter_locations()
     data = load_count_data()
-    data_load_state.text('Laster data... Ferdig!')
+    data_loading = st.text('')
 
     st.subheader('Oversikt over tellere')
 
@@ -38,8 +38,7 @@ if __name__ == '__main__':
     min = dates.min().date()
     max = dates.max().date()
     date_slider: tuple[date, date] =  st.slider('Dato/tid', min, max, (min, max))
-    (from_dt, to_dt) = date_slider
-    (from_dt, to_dt) = (datetime.combine(from_dt, time()), datetime.combine(to_dt, time()))
+    (from_dt, to_dt) = tuple(map(lambda d: datetime.combine(d, time()), date_slider))
 
     data['Date'] = dates
     filtered_data = data.loc[(data['Date'] >= from_dt) & (data['Date'] <= to_dt)]
