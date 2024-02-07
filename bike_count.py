@@ -22,7 +22,45 @@ def load_counter_locations() -> pd.DataFrame:
 def load_count_data() -> pd.DataFrame:
     df = pd.read_csv(BIKE_COUNT_DATA_URL)
     print('Fetched new bike count data')
+    dates = pd.to_datetime(df['Date'])
+    df['Date'] = dates
+    print('Transformed dates')
     return df
+
+def render_overview_map(locations: pd.DataFrame, data: pd.DataFrame):
+    st.subheader('Oversikt over tellere')
+
+    min = data['Date'].min().date()
+    max = data['Date'].max().date()
+    date_slider: tuple[date, date] =  st.slider('Dato/tid', min, max, (min, max))
+
+    (from_dt, to_dt) = tuple(map(lambda d: datetime.combine(d, time()), date_slider)) # convert to datetime for filtering
+    filtered_data = data.loc[(data['Date'] >= from_dt) & (data['Date'] <= to_dt)]
+
+    loc_counts: pd.Series = filtered_data.groupby(['Station_id'])['Count'].sum();
+    locations_with_counts = pd.merge(locations, loc_counts, on="Station_id")
+
+    map_fig = px.scatter_mapbox(locations_with_counts, lat='Latitude', lon='Longitude', hover_name='Navn', zoom=10, size="Count" , color = 'Count', labels = { 'Count': 'Antall passeringer' })
+    map_fig.update_layout(mapbox_style='open-street-map')
+    map_fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    st.plotly_chart(map_fig)
+
+def render_specific_location(locations: pd.DataFrame, data: pd.DataFrame):
+    st.subheader('Data fra bestemt teller')
+    sel_name = st.selectbox('Velg teller', locations['Navn'], index=None)
+    if sel_name != None:
+        sel_id = locations.loc[locations['Navn'] == sel_name, 'Station_id'].item()
+        loc_data = data[data['Station_id'] == sel_id]
+        st.bar_chart(loc_data, x='Date', y='Count')
+
+def render_raw_data(locations: pd.DataFrame, data: pd.DataFrame):
+    st.subheader('Referansedata')
+    with st.expander('Referansedata'):
+        st.write('Dataen er offentlig data fra Stavanger kommune. Den er hentet fra [opencom.no/dataset/lokalisering-sykkeltellere-stavanger](https://opencom.no/dataset/lokalisering-sykkeltellere-stavanger) og [opencom.no/dataset/sykkeldata](https://opencom.no/dataset/sykkeldata)')
+        st.subheader('Tellere')
+        st.write(locations)
+        st.subheader('Sykkeldata')
+        st.write(data)
 
 def app():
     st.title('Sykkeltellere i Stavanger-område')
@@ -32,42 +70,9 @@ def app():
     data = load_count_data()
     data_loading.text('')
 
-    #### Map Overview ###
-    st.subheader('Oversikt over tellere')
-
-    dates = pd.to_datetime(data['Date'])
-    min = dates.min().date()
-    max = dates.max().date()
-    date_slider: tuple[date, date] =  st.slider('Dato/tid', min, max, (min, max))
-    (from_dt, to_dt) = tuple(map(lambda d: datetime.combine(d, time()), date_slider)) # convert to datetime for filtering
-
-    data['Date'] = dates
-    filtered_data = data.loc[(data['Date'] >= from_dt) & (data['Date'] <= to_dt)]
-
-    location_counts: pd.Series = filtered_data.groupby(['Station_id'])['Count'].sum();
-    locations_with_counts = pd.merge(locations, location_counts, on="Station_id")
-
-    map_fig = px.scatter_mapbox(locations_with_counts, lat='Latitude', lon='Longitude', hover_name='Navn', zoom=10, size="Count" , color = 'Count', labels = { 'Count': 'Antall passeringer' })
-    map_fig.update_layout(mapbox_style='open-street-map')
-    map_fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    st.plotly_chart(map_fig)
-
-    ### Counter history chart ###
-    st.subheader('Data fra bestemt teller')
-    sel_name = st.selectbox('Velg teller', locations['Navn'], index=None)
-    if sel_name != None:
-        sel_id = locations.loc[locations['Navn'] == sel_name, 'Station_id'].item()
-        data = data[data['Station_id'] == sel_id]
-        st.bar_chart(data, x='Date', y='Count')
-
-    ### Raw data ###
-    st.subheader('Referansedata')
-    with st.expander('Raw data'):
-        st.text('Dataen kommer fra https://opencom.no/dataset/lokalisering-sykkeltellere-stavanger og https://opencom.no/dataset/sykkeldata')
-        st.subheader('Tellere')
-        st.write(locations)
-        st.subheader('Passeringsdata')
-        st.write(data)
+    render_overview_map(locations, data)
+    render_specific_location(locations, data)
+    render_raw_data(locations, data)
 
 if __name__ == '__main__':
     app()
