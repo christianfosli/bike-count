@@ -1,0 +1,37 @@
+name: 'cicd'
+on: push
+
+permissions:
+  # required to push to ghcr
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add build tags to docker-commpose.yaml
+        run: |
+          COMMIT_SHA="$(git rev-parse --short HEAD)" \
+            yq -i '.services.app.build.tags[0] = "ghcr.io/christianfosli/bike-count/app:" + strenv(COMMIT_SHA)' docker-compose.yaml
+
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            printf 'Banch is main! Adding latest as build tag\n'
+            yq -i '.services.app.build.tags[1] = "gchr.io/christianfosli/bike-count/app:latest"' docker-compose.yaml
+          fi
+
+          cat docker-compose.yaml | yq '.services.app.build'
+
+      - name: Build with docker compose
+        run: docker compose build
+
+      - name: Login to ghcr
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push to ghcr
+        run: docker push --all-tags ghcr.io/christianfosli/bike-count/app

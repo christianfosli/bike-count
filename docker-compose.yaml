@@ -1,6 +1,7 @@
 services:
   app:
-    build: .
+    build:
+      context: .
     ports:
       - 8501:8501
     develop:
