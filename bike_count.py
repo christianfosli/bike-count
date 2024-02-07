@@ -47,10 +47,15 @@ def render_overview_map(locations: pd.DataFrame, data: pd.DataFrame):
 
 def render_specific_location(locations: pd.DataFrame, data: pd.DataFrame):
     st.subheader('Data fra bestemt teller')
-    sel_name = st.selectbox('Velg teller', locations['Navn'], index=None)
-    if sel_name != None:
-        sel_id = locations.loc[locations['Navn'] == sel_name, 'Station_id'].item()
-        loc_data = data[data['Station_id'] == sel_id]
+    sel_name = st.selectbox('Velg teller', locations['Navn'].sort_values(), index=None) # type: ignore
+    if sel_name == None:
+        return
+
+    sel_id = locations.loc[locations['Navn'] == sel_name, 'Station_id'].item()
+    loc_data = data[data['Station_id'] == sel_id]
+    if loc_data.empty:
+        st.warning(f'Fant ingen sykkeldata for {sel_name}')
+    else:
         st.bar_chart(loc_data, x='Date', y='Count')
 
 def render_raw_data(locations: pd.DataFrame, data: pd.DataFrame):
