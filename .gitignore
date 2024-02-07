@@ -5,7 +5,3 @@ __pycache__/
 
 # Virtual environment
 .venv/
-
-# Cached datasets
-sykkeldata.csv
-lokaliseringsykkeltellerestavanger.csv
