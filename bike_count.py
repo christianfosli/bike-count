@@ -12,7 +12,7 @@ BIKE_COUNTER_LOCATIONS_URL='https://opencom.no/dataset/1f64a769-9c10-4cc7-9db9-6
 # See https://opencom.no/dataset/sykkeldata
 BIKE_COUNT_DATA_URL='https://opencom.no/dataset/90cef5d5-601e-4412-87e4-3e9e8dc59245/resource/4c71d19a-adc4-42e0-9bed-c990316479be/download/sykkeldata.csv'
 
-@st.cache_data(ttl=36000)
+@st.cache_data(ttl=3600 * 24)
 def load_counter_locations() -> pd.DataFrame:
     df = pd.read_csv(BIKE_COUNTER_LOCATIONS_URL)
     print('Fetched new counter location data')
@@ -24,21 +24,22 @@ def load_count_data() -> pd.DataFrame:
     print('Fetched new bike count data')
     return df
 
-if __name__ == '__main__':
+def app():
     st.title('Sykkeltellere i Stavanger-område')
 
     data_loading = st.text('Laster data...')
     locations = load_counter_locations()
     data = load_count_data()
-    data_loading = st.text('')
+    data_loading.text('')
 
+    #### Map Overview ###
     st.subheader('Oversikt over tellere')
 
     dates = pd.to_datetime(data['Date'])
     min = dates.min().date()
     max = dates.max().date()
     date_slider: tuple[date, date] =  st.slider('Dato/tid', min, max, (min, max))
-    (from_dt, to_dt) = tuple(map(lambda d: datetime.combine(d, time()), date_slider))
+    (from_dt, to_dt) = tuple(map(lambda d: datetime.combine(d, time()), date_slider)) # convert to datetime for filtering
 
     data['Date'] = dates
     filtered_data = data.loc[(data['Date'] >= from_dt) & (data['Date'] <= to_dt)]
@@ -51,9 +52,15 @@ if __name__ == '__main__':
     map_fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     st.plotly_chart(map_fig)
 
+    ### Counter history chart ###
     st.subheader('Data fra bestemt teller')
-    # TODO: make it possible to pick a specific counter to visialize
+    sel_name = st.selectbox('Velg teller', locations['Navn'], index=None)
+    if sel_name != None:
+        sel_id = locations.loc[locations['Navn'] == sel_name, 'Station_id'].item()
+        data = data[data['Station_id'] == sel_id]
+        st.bar_chart(data, x='Date', y='Count')
 
+    ### Raw data ###
     st.subheader('Referansedata')
     with st.expander('Raw data'):
         st.text('Dataen kommer fra https://opencom.no/dataset/lokalisering-sykkeltellere-stavanger og https://opencom.no/dataset/sykkeldata')
@@ -61,3 +68,6 @@ if __name__ == '__main__':
         st.write(locations)
         st.subheader('Passeringsdata')
         st.write(data)
+
+if __name__ == '__main__':
+    app()
