@@ -1,19 +1,25 @@
 # Bike Count
 
-Playing with Python and Streamlit.
-**Work-in-Progress**
+Visualize data from bike counters in stavanger kommune
 
-## Development
+A pet project I made to play with Python and Streamlit
+
+### Development
 
 ```sh
 # Set up environment
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate # or one of the equivalent script if you prefer powershell / windows
 pip install -r requirements.txt
 
 # Open project folder in your favorite editor!
+```
 
-# Run locally with streamlit (installed into venv by the above pip install command)
+### Run locally with python / streamlit
+
+First setup environment following the above instructions, then:
+
+```sh
 streamlit run bike_count.py
 ```
 

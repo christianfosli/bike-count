@@ -1,3 +1,9 @@
+"""
+Bike Count
+
+Visualize data from bike counters in stavanger kommune
+"""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -26,19 +32,19 @@ def load_count_data() -> pd.DataFrame:
 
     # The dataset includes counts per hour, but for our needs per date is sufficient, so we'll convert it to per date
     df: pd.DataFrame = df.groupby(['Station_id', 'Date', 'Lane_Name']).aggregate({'Station_Name': 'first', 'Count': 'sum', 'Average_Speed': 'mean', 'Average_Temperature': 'mean'}).reset_index() # type: ignore
-
-    # We also want to parse the date as a datetime rather than a string, for filtering purposes
-    df['Date'] = pd.to_datetime(df['Date'])
+    # We also want to parse the date as date rather than string, for filtering purposes
+    df['Date'] = df['Date'].map(lambda x : datetime.strptime(x, '%Y-%m-%d').date())
 
     return df
 
-def date_filter(locations: pd.DataFrame, data: pd.DataFrame) -> tuple[tuple[datetime,datetime], pd.DataFrame, pd.DataFrame]:
-    min = data['Date'].min().date()
-    max = data['Date'].max().date()
+def date_filter(locations: pd.DataFrame, data: pd.DataFrame) -> tuple[tuple[date,date], pd.DataFrame, pd.DataFrame]:
+    min: date = data['Date'].min() # type: ignore
+    max: date = data['Date'].max() # type: ignore
     date_slider: tuple[date, date] = st.slider('Dato/tid', min, max, (min, max))
-    st.info('Valgbar tidsrammet bestemmes av underliggende datasett. Se mer info under [referansedata](/#referansedata).', icon='ℹ️')
+    st.info('Valgbar tidsramme bestemmes av underliggende datasett. Se mer info under [referansedata](/#referansedata).', icon='ℹ️')
 
-    (from_dt, to_dt) = tuple(map(lambda d: datetime.combine(d, time()), date_slider)) # convert to datetime for filtering
+    (from_dt, to_dt) = date_slider
+
     filtered_data = data.loc[(data['Date'] >= from_dt) & (data['Date'] <= to_dt)]
 
     loc_counts: pd.Series = filtered_data.groupby(['Station_id'])['Count'].sum();
@@ -58,7 +64,7 @@ def render_specific_location(locations: pd.DataFrame, data: pd.DataFrame):
     st.subheader('Data fra bestemt teller')
     loc_dict = locations.groupby('Station_id').apply(dict, include_groups=False)
     options = locations.sort_values(by='Navn')['Station_id']
-    sel_ix: int | None = pd.Index(options).get_loc(st.session_state.get('sel_id')) if 'sel_id' in st.session_state else None # type: ignore
+    sel_ix: int | None = None if st.session_state.get('sel_id') == None else pd.Index(options).get_loc(st.session_state.get('sel_id')) # type: ignore
     sel_id = st.selectbox('Velg teller', options, index=sel_ix, format_func=lambda id: f'{loc_dict[id]["Navn"].item()} ({int(loc_dict[id]["Count"].item())} passeringer)', key='sel_id')
     if sel_id == None:
         return
@@ -70,7 +76,7 @@ def render_specific_location(locations: pd.DataFrame, data: pd.DataFrame):
         st.bar_chart(loc_data, x='Date', y='Count')
 
 
-def render_raw_data(locations: pd.DataFrame, data: pd.DataFrame):
+def render_data_tables(locations: pd.DataFrame, data: pd.DataFrame):
     st.subheader('Referansedata')
     with st.expander('Referansedata'):
         st.write(('Dataen er offentlig data fra stavanger kommune. '
@@ -80,6 +86,7 @@ def render_raw_data(locations: pd.DataFrame, data: pd.DataFrame):
         st.subheader('Tellere')
         st.write(locations)
         st.subheader('Sykkeldata')
+        st.info('Datasettet er transformert noe i forhold til opprinnelig csv for å tilpasses denne nettsidens behov', icon='ℹ️')
         st.write(data)
 
 def app():
@@ -94,7 +101,7 @@ def app():
 
     render_overview_map(locations_with_counts, filtered_data)
     render_specific_location(locations_with_counts, filtered_data)
-    render_raw_data(locations, data)
+    render_data_tables(locations, data)
 
 if __name__ == '__main__':
     app()
