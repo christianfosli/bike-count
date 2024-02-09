@@ -1,5 +1,6 @@
 services:
   app:
+    image: ghcr.io/christianfosli/bike-count/app
     build:
       context: .
     ports:
