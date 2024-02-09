@@ -1,5 +1,7 @@
 @description('Environment e.g. "dev", "test", "prod"')
 param environment string
+@description('Custom domain name to use, e.g. "sykkelteller.christianfosli.com"')
+param hostName string
 param location string = resourceGroup().location
 param imageVersion string = 'latest'
 param tags object = {
@@ -44,6 +46,16 @@ resource appEnv 'Microsoft.App/managedEnvironments@2023-05-01' = {
       }
     }
   }
+
+  resource tlsCert 'managedCertificates' = {
+    name: 'custom-domain-tls'
+    location: location
+    tags: tags
+    properties: {
+      domainControlValidation: 'CNAME'
+      subjectName: hostName
+    }
+  }
 }
 
 resource app 'Microsoft.App/containerApps@2023-05-01' = {
@@ -56,6 +68,13 @@ resource app 'Microsoft.App/containerApps@2023-05-01' = {
       ingress: {
         targetPort: 8501
         external: true
+        customDomains: [
+          {
+            name: appEnv::tlsCert.properties.subjectName
+            certificateId: appEnv::tlsCert.id
+            bindingType: 'SniEnabled'
+          }
+        ]
       }
     }
     template: {

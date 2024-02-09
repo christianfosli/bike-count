@@ -30,8 +30,16 @@ jobs:
           subscription-id: ${{ vars.AZ_SUBSCRIPTION_ID }}
           tenant-id: ${{ vars.AZ_TENANT_ID }}
 
+      - name: Preview changes
+        uses: azure/arm-deploy@v1
+        with:
+          resourceGroupName: rg-bikecount-${{ matrix.environment }}
+          template: ./infra/main.bicep
+          parameters: environment=${{ matrix.environment }} hostName=${{ vars.CA_HOST_NAME }}
+          additionalArguments: "--what-if"
+
       - uses: azure/arm-deploy@v1
         with:
           resourceGroupName: rg-bikecount-${{ matrix.environment }}
           template: ./infra/main.bicep
-          parameters: environment=${{ matrix.environment }}
+          parameters: environment=${{ matrix.environment }} hostName=${{ vars.CA_HOST_NAME }}
