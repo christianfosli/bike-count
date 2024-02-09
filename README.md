@@ -1,10 +1,15 @@
 # Bike Count
 
+[![cicd](https://github.com/christianfosli/bike-count/actions/workflows/cicd.yaml/badge.svg)](https://github.com/christianfosli/bike-count/actions/workflows/cicd.yaml)
+[![infra](https://github.com/christianfosli/bike-count/actions/workflows/infra.yaml/badge.svg)](https://github.com/christianfosli/bike-count/actions/workflows/infra.yaml)
+
 Visualize data from bike counters in stavanger kommune
 
 A pet project I made to play with Python and Streamlit
 
-### Development
+See it live at [sykkelteller.christianfosli.com](https://sykkelteller.christianfosli.com)
+
+## Development
 
 ```sh
 # Set up environment
@@ -34,3 +39,8 @@ Or if you're using a recent version of compose you can run with hot-reload suppo
 ```sh
 docker compose watch
 ```
+
+## Infra
+
+The webapp is built as a docker image and run using Azure Container Apps.
+The required infrastructure to do this is declared in Bicep, in the infra folder.
