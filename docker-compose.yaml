@@ -10,3 +10,5 @@ services:
         - action: sync
           path: bike_count.py
           target: /app/bike_count.py
+        - action: rebuild
+          path: requirements.txt

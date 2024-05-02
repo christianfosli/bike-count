@@ -15,7 +15,7 @@ See it live at [sykkelteller.christianfosli.com](https://sykkelteller.christianf
 # Set up environment
 python -m venv .venv
 source .venv/bin/activate # or one of the equivalent script if you prefer powershell / windows
-pip install -r requirements.txt
+pip install -r requirements-test.txt
 
 # Open project folder in your favorite editor!
 ```
