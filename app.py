@@ -76,10 +76,14 @@ with st.expander("Tabellvisning"):
 
 st.divider()
 
-st.write(
+st.markdown(
     (
-        "Dataen er offentlig data fra stavanger kommune. "
+        ":material/dataset: Dataen er offentlig data fra stavanger kommune. "
         "Den er hentet fra [opencom.no/dataset/lokalisering-sykkeltellere-stavanger]( https://opencom.no/dataset/lokalisering-sykkeltellere-stavanger) "
         "og [opencom.no/dataset/sykkeldata](https://opencom.no/dataset/sykkeldata). "
     )
+)
+
+st.markdown(
+    ":material/code: Appen's kildekode er tilgjengelig på [GitHub](https://github.com/christianfosli/bike-count)"
 )
